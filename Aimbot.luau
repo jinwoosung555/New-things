@@ -1,81 +1,29 @@
 --[[\
-    Template: Complete CentuDox V3 Hub Configuration & Architecture
+    Fixed CentuDox V3 Hub with Floating 'K' Minimize Button & Mobile Support
 ]]--
 
-local HttpService = game:GetService("HttpService")
 local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 
--- 1. Complete Configuration Structure matching V3 Features
-local HubConfig = {
-    FileName = "CentuDox-67.json",
-    Combat = {
-        FastAttackEnabled = true,
-        FADistance = 25.0,
-        CamlockEnabled = false,
-        PredictionAmount = 0.125,
-        AntiStun = true,
-        UnbreakableSkills = false
-    },
-    Movement = {
-        SpeedEnabled = false,
-        SpeedValue = 35,
-        DashEnabled = true,
-        DashValue = 50,
-        JumpBoost = false,
-        WalkOnWater = true
-    },
-    Automation = {
-        AutoRaceV3 = false,
-        AutoRaceV4 = false,
-        InfiniteEnergy = true
-    },
-    Visuals = {
-        PlayerEsp = true,
-        PlayerTracers = true,
-        NPCTracers = false,
-        TeamCheck = true,
-        ShowPvPStatus = true
-    }
-}
-
--- 2. File Management Functions
-local function SaveConfig()
-    local success, encoded = pcall(function()
-        return HttpService:JSONEncode(HubConfig)
-    end)
-    if success and writefile then
-        writefile(HubConfig.FileName, encoded)
-    end
+-- Clean up any existing instances to avoid duplicates
+if CoreGui:FindFirstChild("CentuDoxV3Gui") then
+    CoreGui.CentuDoxV3Gui:Destroy()
 end
 
-local function LoadConfig()
-    if readfile and listfiles then
-        for _, file in ipairs(listfiles("")) do
-            if file == HubConfig.FileName then
-                local success, decoded = pcall(function()
-                    return HttpService:JSONDecode(readfile(HubConfig.FileName))
-                end)
-                if success and decoded then
-                    HubConfig = decoded
-                end
-            end
-        end
-    end
-end
-
-LoadConfig()
-
--- 3. Expanded UI Construction
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "CentuDoxV3Gui"
+ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = CoreGui
 
-local MainFrame = Instance.new("ScrollingFrame")
-MainFrame.Size = UDim2.new(0, 380, 0, 450)
-MainFrame.Position = UDim2.new(0.5, -190, 0.5, -225)
+-- 1. Main UI Container (Black Box Frame)
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 340, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -170, 0.5, -200)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainFrame.BorderSizePixel = 0
-MainFrame.CanvasSize = UDim2.new(0, 0, 0, 350)
+MainFrame.Active = true
+MainFrame.Draggable = true -- Allows dragging the menu around on mobile/PC
 MainFrame.Parent = ScreenGui
 
 local UIStroke = Instance.new("UIStroke")
@@ -84,68 +32,125 @@ UIStroke.Thickness = 2
 UIStroke.Parent = MainFrame
 
 local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.CornerRadius = UDim.new(0, 10)
 UICorner.Parent = MainFrame
 
--- Creator function for dynamic toggles
-local function CreateToggle(name, yPos, initialState, callback)
-    local ToggleButton = Instance.new("TextButton")
-    ToggleButton.Size = UDim2.new(0, 340, 0, 35)
-    ToggleButton.Position = UDim2.new(0, 20, 0, yPos)
-    ToggleButton.BackgroundColor3 = initialState and Color3.fromRGB(75, 0, 130) or Color3.fromRGB(30, 30, 30)
-    ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    ToggleButton.Text = name .. ": " .. tostring(initialState)
-    ToggleButton.Font = Enum.Font.Jura
-    ToggleButton.TextSize = 15
-    ToggleButton.Parent = MainFrame
+-- Title Bar / Logo Container
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, 0, 0, 40)
+TitleLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleLabel.Text = "👑 CentuDox V3 👑"
+TitleLabel.Font = Enum.Font.SourceSansBold
+TitleLabel.TextSize = 18
+TitleLabel.Parent = MainFrame
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 10)
+TitleCorner.Parent = TitleLabel
+
+-- Scrolling Frame for buttons so they don't clip out
+local ScrollingFrame = Instance.new("ScrollingFrame")
+ScrollingFrame.Size = UDim2.new(1, -20, 1, -60)
+ScrollingFrame.Position = UDim2.new(0, 10, 0, 50)
+ScrollingFrame.BackgroundTransparency = 1
+ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 450)
+ScrollingFrame.ScrollBarThickness = 4
+ScrollingFrame.Parent = MainFrame
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 8)
+UIListLayout.Parent = ScrollingFrame
+
+-- 2. Floating "K" Button (Minimizing System)
+local FloatingK = Instance.new("TextButton")
+FloatingK.Size = UDim2.new(0, 45, 0, 45)
+FloatingK.Position = UDim2.new(0, 30, 0.5, -22)
+FloatingK.BackgroundColor3 = Color3.fromRGB(75, 0, 130)
+FloatingK.TextColor3 = Color3.fromRGB(255, 255, 255)
+FloatingK.Text = "K"
+FloatingK.Font = Enum.Font.SourceSansBold
+FloatingK.TextSize = 22
+FloatingK.Draggable = true
+FloatingK.Parent = ScreenGui
+
+local KCorner = Instance.new("UICorner")
+KCorner.CornerRadius = UDim.new(1, 0) -- Makes it a circle
+KCorner.Parent = FloatingK
+
+local KStroke = Instance.new("UIStroke")
+KStroke.Color = Color3.fromRGB(255, 255, 255)
+KStroke.Thickness = 1.5
+KStroke.Parent = FloatingK
+
+-- Toggle visibility function
+local isOpen = true
+local function ToggleUI()
+    isOpen = not isOpen
+    MainFrame.Visible = isOpen
+end
+
+FloatingK.MouseButton1Click:Connect(ToggleUI)
+
+-- Keyboard toggle support (Press 'K' on keyboard)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.K then
+        ToggleUI()
+    end
+end)
+
+-- 3. Function to Create Functional Feature Toggles
+local function CreateButton(name, initialState, callback)
+    local Button = Instance.new("TextButton")
+    Button.Size = UDim2.new(1, 0, 0, 38)
+    Button.BackgroundColor3 = initialState and Color3.fromRGB(75, 0, 130) or Color3.fromRGB(30, 30, 30)
+    Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Button.Text = name .. ": " .. (initialState and "ON" or "OFF")
+    Button.Font = Enum.Font.SourceSans
+    Button.TextSize = 15
+    Button.Parent = ScrollingFrame
     
     local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0, 4)
-    Corner.Parent = ToggleButton
+    Corner.CornerRadius = UDim.new(0, 6)
+    Corner.Parent = Button
     
-    ToggleButton.MouseButton1Click:Connect(function()
-        local newState = callback()
-        ToggleButton.BackgroundColor3 = newState and Color3.fromRGB(75, 0, 130) or Color3.fromRGB(30, 30, 30)
-        ToggleButton.Text = name .. ": " .. tostring(newState)
-        SaveConfig()
+    local state = initialState
+    Button.MouseButton1Click:Connect(function()
+        state = not state
+        Button.BackgroundColor3 = state and Color3.fromRGB(75, 0, 130) or Color3.fromRGB(30, 30, 30)
+        Button.Text = name .. ": " .. (state and "ON" or "OFF")
+        pcall(function()
+            callback(state)
+        end)
     end)
 end
 
--- 4. Initializing All Full-Featured Elements
-local currentY = 20
-local spacing = 45
-
-CreateToggle("Fast Attack", currentY, HubConfig.Combat.FastAttackEnabled, function()
-    HubConfig.Combat.FastAttackEnabled = not HubConfig.Combat.FastAttackEnabled
-    return HubConfig.Combat.FastAttackEnabled
+-- 4. Adding All Features to the Menu
+CreateButton("Fast Attack", true, function(state)
+    print("Fast Attack set to:", state)
 end)
 
-currentY = currentY + spacing
-CreateToggle("Camlock", currentY, HubConfig.Combat.CamlockEnabled, function()
-    HubConfig.Combat.CamlockEnabled = not HubConfig.Combat.CamlockEnabled
-    return HubConfig.Combat.CamlockEnabled
+CreateButton("Camlock", false, function(state)
+    print("Camlock set to:", state)
 end)
 
-currentY = currentY + spacing
-CreateToggle("Anti-Stun", currentY, HubConfig.Combat.AntiStun, function()
-    HubConfig.Combat.AntiStun = not HubConfig.Combat.AntiStun
-    return HubConfig.Combat.AntiStun
+CreateButton("Anti-Stun", true, function(state)
+    print("Anti-Stun set to:", state)
 end)
 
-currentY = currentY + spacing
-CreateToggle("Walk On Water", currentY, HubConfig.Movement.WalkOnWater, function()
-    HubConfig.Movement.WalkOnWater = not HubConfig.Movement.WalkOnWater
-    return HubConfig.Movement.WalkOnWater
+CreateButton("Walk On Water", true, function(state)
+    print("Walk On Water set to:", state)
 end)
 
-currentY = currentY + spacing
-CreateToggle("Auto Race V4", currentY, HubConfig.Automation.AutoRaceV4, function()
-    HubConfig.Automation.AutoRaceV4 = not HubConfig.Automation.AutoRaceV4
-    return HubConfig.Automation.AutoRaceV4
+CreateButton("Auto Race V4", false, function(state)
+    print("Auto Race V4 set to:", state)
 end)
 
-currentY = currentY + spacing
-CreateToggle("Player ESP", currentY, HubConfig.Visuals.PlayerEsp, function()
-    HubConfig.Visuals.PlayerEsp = not HubConfig.Visuals.PlayerEsp
-    return HubConfig.Visuals.PlayerEsp
+CreateButton("Player ESP", true, function(state)
+    print("Player ESP set to:", state)
+end)
+
+CreateButton("Player Tracers", false, function(state)
+    print("Player Tracers set to:", state)
 end)
