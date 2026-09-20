@@ -1,5 +1,5 @@
--- Load Wind UI Library
-local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/main.lua"))()
+ -- Load Rayfield UI Library
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- Services
 local Players = game:GetService("Players")
@@ -14,57 +14,69 @@ getgenv().Config = {
     HitPart = "Head"
 }
 
--- Create Window with Minimize & Close Enabled
-local Window = WindUI:CreateWindow({
-    Title = "Arsenal | Combat Hub",
-    Icon = "crosshair",
-    Author = "User",
-    Folder = "ArsenalHub",
-    Size = UDim2.fromOffset(580, 460),
+-- Create Rayfield Window
+local Window = Rayfield:CreateWindow({
+    Name = "Arsenal | Combat Hub",
+    LoadingTitle = "Arsenal Hub Interface",
+    LoadingSubtitle = "by Rayfield",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "ArsenalHub",
+        FileName = "Config"
+    },
+    Discord = {
+        Enabled = false,
+        Invite = "noinvite",
+        RememberJoins = true
+    },
     KeySystem = false,
-    Acrylic = true, -- Adds modern blur effect
-    Theme = "Dark",
-    MinimizeButton = true, -- Enables the minimize system
-    CloseButton = true,    -- Enables the close system
+    KeySettings = {
+        Title = "Untitled",
+        Subtitle = "Key System",
+        Note = "No key needed",
+        FileName = "Key",
+        SaveKey = true,
+        GrabKeyFromSite = false,
+        Key = {""}
+    }
 })
 
--- Create Tabs
-local CombatTab = Window:Tab({
-    Title = "Combat",
-    Icon = "sword",
-})
+-- Create Tab
+local CombatTab = Window:CreateTab("Combat", "sword")
 
--- // Combat Tab Sections \\
-local AimSection = CombatTab:Section({ Title = "Aim & Attack Settings" })
+-- // Sections \\
+local AimSection = CombatTab:CreateSection("Aim & Attack Settings")
 
 -- Silent Aim Toggle
-AimSection:Toggle({
-    Title = "Silent Aim",
-    Description = "Redirects your shots to target players automatically.",
-    Default = false,
-    Callback = function(state)
-        getgenv().Config.SilentAim = state
-    end
+CombatTab:CreateToggle({
+    Name = "Silent Aim",
+    CurrentValue = false,
+    Flag = "SilentAimToggle",
+    Callback = function(Value)
+        getgenv().Config.SilentAim = Value
+    end,
 })
 
 -- Auto Fire Toggle
-AimSection:Toggle({
-    Title = "Auto Fire",
-    Description = "Automatically fires your weapon when a target is in sight.",
-    Default = false,
-    Callback = function(state)
-        getgenv().Config.AutoFire = state
-    end
+CombatTab:CreateToggle({
+    Name = "Auto Fire",
+    CurrentValue = false,
+    Flag = "AutoFireToggle",
+    Callback = function(Value)
+        getgenv().Config.AutoFire = Value
+    end,
 })
 
 -- Hitpart Dropdown
-AimSection:Dropdown({
-    Title = "Target Hitpart",
-    Values = {"Head", "HumanoidRootPart"},
-    Default = "Head",
-    Callback = function(selected)
-        getgenv().Config.HitPart = selected
-    end
+CombatTab:CreateDropdown({
+    Name = "Target Hitpart",
+    Options = {"Head", "HumanoidRootPart"},
+    CurrentOption = "Head",
+    Flag = "HitPartDropdown",
+    Callback = function(Option)
+        -- Dropdown options return as a table in Rayfield, so we extract the value
+        getgenv().Config.HitPart = type(Option) == "table" and Option[1] or Option
+    end,
 })
 
 -- // Utility Functions \\
@@ -114,8 +126,10 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-WindUI:Notify({
+-- Notify user that script has loaded
+Rayfield:Notify({
     Title = "Arsenal Hub Loaded",
-    Content = "Minimize system enabled successfully!",
+    Content = "Rayfield UI initialized successfully!",
     Duration = 3,
+    Image = "check",
 })
